@@ -1,12 +1,12 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class BarclaysEpdqGateway < Gateway
-      self.test_url = 'https://secure2.mde.epdq.co.uk:11500'
-      self.live_url = 'https://secure2.epdq.co.uk:11500'
+      TEST_URL = 'https://secure2.mde.epdq.co.uk:11500'
+      LIVE_URL = 'https://secure2.epdq.co.uk:11500'
 
-      self.supported_countries = ['GB']
+      self.supported_countries = ['UK']
       self.default_currency = 'GBP'
-      self.supported_cardtypes = [:visa, :master, :american_express, :maestro, :switch ]
+      self.supported_cardtypes = [:visa, :master, :maestro, :switch ]
       self.money_format = :cents
       self.homepage_url = 'http://www.barclaycard.co.uk/business/accepting-payments/epdq-mpi/'
       self.display_name = 'Barclays ePDQ'
@@ -64,15 +64,10 @@ module ActiveMerchant #:nodoc:
       # code returned by ePDQ
       def credit(money, creditcard_or_authorization, options = {})
         if creditcard_or_authorization.is_a?(String)
-          deprecated CREDIT_DEPRECATION_MESSAGE
-          refund(money, creditcard_or_authorization, options)
+          credit_existing_order(money, creditcard_or_authorization, options)
         else
           credit_new_order(money, creditcard_or_authorization, options)
         end
-      end
-
-      def refund(money, authorization, options = {})
-        credit_existing_order(money, authorization, options)
       end
 
       def void(authorization, options = {})
@@ -124,7 +119,7 @@ module ActiveMerchant #:nodoc:
       end     
       
       def commit(document)
-        url = (test? ? self.test_url : self.live_url)
+        url = (test? ? TEST_URL : LIVE_URL)
         data = ssl_post(url, document.to_xml)
         parse(data)
       end
@@ -136,15 +131,15 @@ module ActiveMerchant #:nodoc:
 
         def parse
           doc = REXML::Document.new(@response)
-          auth_type = find(doc, "//Transaction/Type").to_s
+          auth_type = find(doc, "//Transaction/Type").to_sym
 
           message = find(doc, "//Message/Text")
           if message.blank?
             message = find(doc, "//Transaction/CardProcResp/CcReturnMsg")
           end
 
-          case auth_type
-          when 'Credit', 'Void'
+          case auth_type.to_sym
+          when :Credit, :Void
             success = find(doc, "//CcReturnMsg") == "Approved."
           else
             success = find(doc, "//Transaction/AuthCode").present?
@@ -153,10 +148,11 @@ module ActiveMerchant #:nodoc:
           {       
             :success => success,
             :message => message,
-            :transaction_id => find(doc, "//Transaction/Id"),
+            :authorization =>
+              [find(doc, "//OrderFormDoc/Id"), find(doc, "//Transaction/Id")].join(":"),
             :avs_result => find(doc, "//Transaction/AvsRespCode"),
             :cvv_result => find(doc, "//Transaction/Cvv2Resp"),
-            :authorization => find(doc, "//OrderFormDoc/Id"),
+            :order_id => find(doc, "//OrderFormDoc/Transaction/Id"),
             :raw_response => @response
           }
         end
@@ -252,7 +248,7 @@ module ActiveMerchant #:nodoc:
         def add_creditcard(creditcard)
           xml.PaymentMech do
             xml.CreditCard do
-              xml.Type({ :DataType => 'S32' }, EPDQ_CARD_TYPES[creditcard.brand.to_sym])
+              xml.Type({ :DataType => 'S32' }, EPDQ_CARD_TYPES[creditcard.type.to_sym])     
               xml.Number creditcard.number
               xml.Expires({ :DataType => 'ExpirationDate', :Locale => 826 }, format_expiry_date(creditcard))
               if creditcard.verification_value.present?

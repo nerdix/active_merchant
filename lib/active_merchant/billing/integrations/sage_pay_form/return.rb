@@ -15,11 +15,7 @@ module ActiveMerchant #:nodoc:
           def success?
             @notification && @notification.complete?
           end
-
-          def cancelled?
-            @notification && @notification.cancelled?
-          end
-
+          
           def message
             @message || @notification.message
           end

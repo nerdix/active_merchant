@@ -17,8 +17,8 @@ module ActiveMerchant
       self.display_name = 'DataCash'
 
       # Datacash server URLs
-      self.test_url = 'https://testserver.datacash.com/Transaction'
-      self.live_url = 'https://mars.transaction.datacash.com/Transaction'
+      TEST_URL = 'https://testserver.datacash.com/Transaction'
+      LIVE_URL = 'https://mars.transaction.datacash.com/Transaction'
 
       # Different Card Transaction Types
       AUTH_TYPE = 'auth'
@@ -139,16 +139,12 @@ module ActiveMerchant
       #   * <tt>:address</tt>:: billing address for card
       def credit(money, reference_or_credit_card, options = {})
         if reference_or_credit_card.is_a?(String)
-          deprecated CREDIT_DEPRECATION_MESSAGE
-          refund(money, reference_or_credit_card)
+          request = build_transaction_refund_request(money, reference_or_credit_card)
         else
           request = build_refund_request(money, reference_or_credit_card, options)
-          commit(request)
         end
-      end
 
-      def refund(money, reference, options = {})
-        commit(build_transaction_refund_request(money, reference))
+        commit(request)
       end
 
       # Is the gateway running in test mode?
@@ -531,7 +527,7 @@ module ActiveMerchant
       #   - ActiveMerchant::Billing::Response object
       #   
       def commit(request)
-        response = parse(ssl_post(test? ? self.test_url : self.live_url, request))      
+        response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request))      
 
         Response.new(response[:status] == DATACASH_SUCCESS, response[:reason], response,
           :test => test?,

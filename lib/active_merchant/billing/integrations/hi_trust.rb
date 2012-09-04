@@ -14,7 +14,7 @@ module ActiveMerchant #:nodoc:
           ActiveMerchant::Billing::Base.integration_mode == :test ? TEST_URL : LIVE_URL
         end
 
-        def self.notification(post, options = {})
+        def self.notification(post)
           Notification.new(post)
         end
         

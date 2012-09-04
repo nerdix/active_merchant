@@ -7,11 +7,9 @@ module ActiveMerchant #:nodoc:
       include BraintreeCommon
 
       self.display_name = 'Braintree (Orange Platform)'
- 
-      self.live_url = self.test_url = 'https://secure.braintreepaymentgateway.com/api/transact.php'
-
-      def add_processor(post, options)
-        post[:processor_id] = options[:processor] unless options[:processor].nil?
+      
+      def api_url
+        'https://secure.braintreepaymentgateway.com/api/transact.php'
       end
     end
   end

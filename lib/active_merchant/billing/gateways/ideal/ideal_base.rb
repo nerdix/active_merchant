@@ -6,12 +6,10 @@ module ActiveMerchant #:nodoc:
     # - does not support multiple subID per merchant
     # - language is fixed to 'nl'
     class IdealBaseGateway < Gateway
-      class_attribute :server_pem, :pem_password, :default_expiration_period
+      class_inheritable_accessor :test_url, :live_url, :server_pem, :pem_password, :default_expiration_period
       self.default_expiration_period = 'PT10M'
       self.default_currency = 'EUR'
       self.pem_password = true
-
-      self.abstract_class = true
 
       # These constants will never change for most users
       AUTHENTICATION_TYPE = 'SHA1_RSA'
@@ -221,7 +219,7 @@ module ActiveMerchant #:nodoc:
         cert_data   = OpenSSL::X509::Certificate.new(cert_file).to_s
         cert_data   = cert_data.sub(/-----BEGIN CERTIFICATE-----/, '')
         cert_data   = cert_data.sub(/-----END CERTIFICATE-----/, '')
-        fingerprint = Base64.decode64(cert_data)
+        fingerprint = ActiveSupport::Base64.decode64(cert_data)
         fingerprint = Digest::SHA1.hexdigest(fingerprint)
         return fingerprint.upcase
       end
@@ -229,12 +227,12 @@ module ActiveMerchant #:nodoc:
       def sign_message(private_key_data, password, data)
         private_key  = OpenSSL::PKey::RSA.new(private_key_data, password)
         signature = private_key.sign(OpenSSL::Digest::SHA1.new, data.gsub('\s', ''))
-        return Base64.encode64(signature).gsub(/\n/, '')
+        return ActiveSupport::Base64.encode64(signature).gsub(/\n/, '')
       end
 
       def verify_message(cert_file, data, signature)
         public_key = OpenSSL::X509::Certificate.new(cert_file).public_key
-        return public_key.verify(OpenSSL::Digest::SHA1.new, Base64.decode64(signature), data)
+        return public_key.verify(OpenSSL::Digest::SHA1.new, ActiveSupport::Base64.decode64(signature), data)
       end
 
       def status_response_verified?(response)

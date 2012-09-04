@@ -3,8 +3,8 @@ require 'digest/md5'
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class NetaxeptGateway < Gateway
-      self.test_url = 'https://epayment-test.bbs.no/'
-      self.live_url = 'https://epayment.bbs.no/'
+      TEST_URL = 'https://epayment-test.bbs.no/'
+      LIVE_URL = 'https://epayment.bbs.no/'
       
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.supported_countries = ['NO', 'DK', 'SE', 'FI']
@@ -57,16 +57,11 @@ module ActiveMerchant #:nodoc:
         commit('Capture', post, false)
       end
 
-      def refund(money, authorization, options = {})
+      def credit(money, authorization, options = {})
         post = {}
         add_credentials(post, options)
         add_authorization(post, authorization, money)
         commit('Credit', post, false)
-      end
-
-      def credit(money, authorization, options = {})
-        deprecated CREDIT_DEPRECATION_MESSAGE
-        refund(money, authorization, options)
       end
 
       def void(authorization, options = {})
@@ -199,7 +194,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def url
-        (test? ? self.test_url : self.live_url)
+        (test? ? TEST_URL : LIVE_URL)
       end
       
       def generate_transaction_id(options)
@@ -211,7 +206,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def build_url(base, parameters=nil)
-        url = "#{test? ? self.test_url : self.live_url}"
+        url = "#{test? ? TEST_URL : LIVE_URL}"
         url << base
         if parameters
           url << '?'

@@ -10,7 +10,7 @@ module ActiveMerchant #:nodoc:
         mattr_accessor :service_url
         self.service_url = 'http://www.bogus.com'
 
-        def self.notification(post, options = {})
+        def self.notification(post)
           Notification.new(post)
         end
         

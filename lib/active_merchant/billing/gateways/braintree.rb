@@ -5,8 +5,6 @@ module ActiveMerchant #:nodoc:
     class BraintreeGateway < Gateway
       include BraintreeCommon
       
-      self.abstract_class = true
-
       def self.new(options={})
         if options.has_key?(:login)
           BraintreeOrangeGateway.new(options)

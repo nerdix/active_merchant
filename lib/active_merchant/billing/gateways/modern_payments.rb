@@ -8,8 +8,6 @@ module ActiveMerchant #:nodoc:
       self.homepage_url = ModernPaymentsCimGateway.homepage_url
       self.display_name = ModernPaymentsCimGateway.display_name
       
-      self.abstract_class = true
-
       def initialize(options = {})
         requires!(options, :login, :password)
         @options = options

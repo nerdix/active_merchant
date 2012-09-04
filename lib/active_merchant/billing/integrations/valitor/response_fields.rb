@@ -6,7 +6,7 @@ module ActiveMerchant #:nodoc:
       module Valitor
         module ResponseFields
           def success?
-            status == 'Completed'
+            valid?
           end
           alias :complete? :success?
           
@@ -14,29 +14,20 @@ module ActiveMerchant #:nodoc:
             @options[:test]
           end
           
-          def item_id
+          def order
             params['Tilvisunarnumer']
           end
-          alias :order :item_id
+          
+          def received_at
+            params['Dagsetning']
+          end
           
           def transaction_id
             params['VefverslunSalaID']
           end
           
-          def currency
-            nil
-          end
-          
           def status
-            "Completed" if acknowledge
-          end
-
-          def received_at
-            Time.parse(params['Dagsetning'].to_s)
-          end
-          
-          def gross
-            "%0.2f" % params['Upphaed'].to_s
+            "OK"
           end
           
           def card_type
@@ -83,12 +74,15 @@ module ActiveMerchant #:nodoc:
             params['Athugasemdir']
           end
           
-          def password
-            @options[:credential2]
-          end
-          
-          def acknowledge
-            password ? Digest::MD5.hexdigest("#{password}#{order}") == params['RafraenUndirskriftSvar'] : true
+          def valid?
+            unless @valid
+              @valid = if(security_number = @options[:password])
+                (params['RafraenUndirskriftSvar'] == Digest::MD5.hexdigest("#{security_number}#{order}"))
+              else
+                true
+              end
+            end
+            @valid
           end
         end
       end

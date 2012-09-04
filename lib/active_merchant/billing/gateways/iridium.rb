@@ -7,8 +7,9 @@ module ActiveMerchant #:nodoc:
     # login to the Iridium Merchant Management System. Instead, you will 
     # use the API username and password you were issued separately.
     class IridiumGateway < Gateway
-      self.live_url = self.test_url = 'https://gw1.iridiumcorp.net/'      
-
+      TEST_URL = 'https://gw1.iridiumcorp.net/'
+      LIVE_URL = 'https://gw1.iridiumcorp.net/'
+      
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.supported_countries = ['GB', 'ES']
       self.default_currency = 'EUR'
@@ -58,11 +59,6 @@ module ActiveMerchant #:nodoc:
       end
       
       def credit(money, authorization, options={})
-        deprecated CREDIT_DEPRECATION_MESSAGE
-        refund(money, authorization, options)
-      end
-
-      def refund(money, authorization, options={})
         commit(build_reference_request('REFUND', money, authorization, options), options)
       end
       
@@ -171,7 +167,7 @@ module ActiveMerchant #:nodoc:
 
       def commit(request, options)
         requires!(options, :action)
-        response = parse(ssl_post(test? ? self.test_url : self.live_url, request,
+        response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request,
                               {"SOAPAction" => "https://www.thepaymentgateway.net/#{options[:action]}",
                                "Content-Type" => "text/xml; charset=utf-8" }))
   

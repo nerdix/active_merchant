@@ -10,7 +10,7 @@ module ActiveMerchant #:nodoc:
         mattr_accessor :service_url
         self.service_url = 'https://secure.chronopay.com/index_shop.cgi'
 
-        def self.notification(post, options = {})
+        def self.notification(post)
           Notification.new(post)
         end
         

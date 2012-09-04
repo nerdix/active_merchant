@@ -1,11 +1,7 @@
-if RUBY_VERSION < '1.9' && $KCODE == "NONE"
-  $KCODE = 'u'
-end
-
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class GarantiGateway < Gateway
-      self.live_url = self.test_url = 'https://sanalposprov.garanti.com.tr/VPServlet'
+      URL = 'https://sanalposprov.garanti.com.tr/VPServlet'
 
       # The countries the gateway supports merchants from as 2 digit ISO country codes
       self.supported_countries = ['US','TR']
@@ -160,11 +156,11 @@ module ActiveMerchant #:nodoc:
         format(value, :two_digits)
       end
 
-      # OrderId field must be A-Za-z0-9_ format and max 36 char
+      # OrderId field must be A-Za-z0-9_ format and max 36 char      
       def format_order_id(order_id)
         order_id.to_s.gsub(/[^A-Za-z0-9_]/, '')[0...36]
       end
-
+      
       def add_addresses(xml, options)
         xml.tag! 'AddressList' do
           if billing_address = options[:billing_address] || options[:address]
@@ -184,30 +180,18 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_address(xml, address)
-        xml.tag! 'Name', normalize(address[:name])
+        xml.tag! 'Name', address[:name]
         address_text = address[:address1]
-        address_text << " #{ address[:address2]}" if address[:address2]
-        xml.tag! 'Text', normalize(address_text)
-        xml.tag! 'City', normalize(address[:city])
-        xml.tag! 'District', normalize(address[:state])
+        address_text << " #{address[:address2]}" if address[:address2]
+        xml.tag! 'Text', address_text
+        xml.tag! 'City', address[:city]
+        xml.tag! 'District', address[:state]
         xml.tag! 'PostalCode', address[:zip]
-        xml.tag! 'Country', normalize(address[:country])
-        xml.tag! 'Company', normalize(address[:company])
+        xml.tag! 'Country', address[:country]
+        xml.tag! 'Company', address[:company]
         xml.tag! 'PhoneNumber', address[:phone].to_s.gsub(/[^0-9]/, '') if address[:phone]
       end
-
-      def normalize(text)
-        return unless text
-        
-        if ActiveSupport::Inflector.method(:transliterate).arity == -2
-          ActiveSupport::Inflector.transliterate(text,'')
-        elsif RUBY_VERSION >= '1.9'
-          text.gsub(/[^\x00-\x7F]+/, '')
-        else
-          ActiveSupport::Inflector.transliterate(text).to_s
-        end
-      end
-
+      
       def add_transaction_data(xml, money, options)
         xml.tag! 'Transaction' do
           xml.tag! 'Type', options[:gvp_order_type]
@@ -222,7 +206,7 @@ module ActiveMerchant #:nodoc:
       end
 
       def commit(money,request)
-        raw_response = ssl_post(self.live_url, "data=" + request)
+        raw_response = ssl_post(URL, "data=" + request)
         response = parse(raw_response)
 
         success = success?(response)
